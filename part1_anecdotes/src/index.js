@@ -1,55 +1,94 @@
-import React, { useState, useEffect, Fragment } from "react"
-import { StyleSheet, View, Text, Button } from "react-native"
+import React, { useState } from 'react'
+import ReactDOM from 'react-dom'
 
-function useQuote() {
-  const [quote, setQuote] = useState(null)
 
-  useEffect(() => {
-    updateQuote()
-  }, [])
 
-  function updateQuote() {
-    fetch("http://localhost:3000/quotes")
-      .then(response => response.json())
-      .then(quotes => {
-        const randomIndex = Math.floor(Math.random() * quotes.length)
-        setQuote(quotes[randomIndex])
-      })
-  }
-
-  return { quote, updateQuote }
-}
-
-export default function App() {
-  const { quote, updateQuote } = useQuote()
-
-  return (
-    <View style={styles.container}>
-      {quote && (
-        <Fragment>
-          <Text style={styles.quoteText}>{quote.text}</Text>
-          <Text style={styles.quoteAuthor}>{quote.author}</Text>
-          <Button onPress={updateQuote} title="Show Me Another Quote!" />
-        </Fragment>
-      )}
-    </View>
+const DisplayVotes = ({ votes }) =>{
+  return(
+    <p>
+      has {votes} votes
+    </p>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 25
-  },
-  quoteText: {
-    textAlign: "center",
-    fontSize: 28
-  },
-  quoteAuthor: {
-    fontSize: 18,
-    marginTop: 25
+const DisplayAnecdote = ({ anecdote }) =>{
+  return(
+    <p>
+      {anecdote}
+    </p>
+  )
+}
+
+
+const DisplayMostVoted = ({ anecdotes, votes }) =>{
+
+  const reducer = (highest, nextVal, index) => {
+    if(nextVal>highest.vote)
+      return highest = {vote: nextVal, index:index};
+    else return highest
   }
-})
+
+  const {vote, index} = votes.reduce(reducer, {vote:0, index:0})
+
+  return(
+    <div>
+      <p>
+        {anecdotes[index]}
+      </p>
+      <p>
+        has {vote} votes
+      </p>
+    </div>
+  )
+}
+
+const App = (props) => {
+  const [selected, setSelected] = useState(0)
+  const [votes, setVotes] = useState(anecdotes.map(() => 0))
+
+
+  const handleClick = (currentAnecdote) =>{
+    let nextAnecdote = Math.round((anecdotes.length - 1) * Math.random(1))
+    if (nextAnecdote === currentAnecdote){
+      for(;currentAnecdote === nextAnecdote;){
+        nextAnecdote = Math.round((anecdotes.length - 1) * Math.random(1))
+      }
+    }
+    return setSelected(nextAnecdote)
+  }
+
+  const handleVote = (votesArray, vote) =>{
+    const newVotes = [...votesArray]
+    newVotes[vote] = newVotes[vote] + 1
+    setVotes(newVotes)
+  }
+
+  return (
+    <div>
+      <h1> Anecdote of the day</h1>
+    
+      <DisplayAnecdote anecdote={props.anecdotes[selected]} />
+      <DisplayVotes votes={votes[selected]} />
+      
+  <button onClick={() => handleVote(votes, selected)}>{"vote"}</button>
+  <button onClick={() => handleClick(selected)}>next anecdote</button>
+      <h1>Anecdote with most votes</h1>
+      
+      <DisplayMostVoted anecdotes={props.anecdotes} votes={votes} />
+    </div>
+  )
+}
+
+const anecdotes = [
+  'If it hurts, do it more often',
+  'Adding manpower to a late software project makes it later!',
+  'The first 90 percent of the code accounts for the first 90 percent of the development time...The remaining 10 percent of the code accounts for the other 90 percent of the development time.',
+  'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.',
+  'Premature optimization is the root of all evil.',
+  'Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.'
+]
+
+ReactDOM.render(
+  <App anecdotes={anecdotes} />,
+  document.getElementById('root')
+)
